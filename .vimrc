@@ -1,4 +1,6 @@
 set number
+set ignorecase
+set smartcase
 
 set tabstop=2
 set shiftwidth=2
@@ -180,8 +182,8 @@ nnoremap <silent><nowait> <space>a  :<C-u>CocList diagnostit> <space>k  :<C-u>Co
 nnoremap <silent><nowait> <space>p  :<C-u>CocListResume<CR>
 endfunction
 
-autocmd VimEnter * NERDTree
-autocmd VimEnter * wincmd p
+" autocmd VimEnter * NERDTree
+" autocmd VimEnter * wincmd p
 autocmd bufenter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
 
 let g:NERDTreeGitStatusIndicatorMapCustom= {
@@ -197,6 +199,42 @@ let g:NERDTreeGitStatusIndicatorMapCustom= {
     \ "Unknown"   : "?"
     \ }
 
+" Check if NERDTree is open or active
+function! IsNERDTreeOpen()
+  return exists("t:NERDTreeBufName") && (bufwinnr(t:NERDTreeBufName) != -1)
+endfunction
+
+function! CheckIfCurrentBufferIsFile()
+  return strlen(expand('%')) > 0
+endfunction
+
+" Call NERDTreeFind iff NERDTree is active, current window contains a modifiable
+" file, and we're not in vimdiff
+function! SyncTree()
+  if &modifiable && IsNERDTreeOpen() && CheckIfCurrentBufferIsFile() && !&diff
+    NERDTreeFind
+    wincmd p
+  endif
+endfunction
+
+" Highlight currently open buffer in NERDTree
+autocmd BufRead * call SyncTree()
+
+function! ToggleTree()
+  if CheckIfCurrentBufferIsFile()
+    if IsNERDTreeOpen()
+      NERDTreeClose
+    else
+      NERDTreeFind
+    endif
+  else
+    NERDTree
+  endif
+endfunction
+
+" open NERDTree with ctrl + n
+nmap <C-n> :call ToggleTree()<CR>
+
 let g:airline_powerline_fonts = 1
 
 let python_highlight_all=1
@@ -209,4 +247,11 @@ let NERDTreeIgnore=['\.pyc$', '\~$'] "ignore files in NERDTree
 
 " Rainbow bracket settings
 let g:rainbow_active = 1
+
+" Go language server
+let g:go_def_mode='gopls'
+let g:go_info_mode='gopls'
+
+
+let g:formatters_python = ['black']
 
